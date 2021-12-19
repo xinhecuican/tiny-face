@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 import glob
-data_folder = './tiny/data/widerface/WIDER_val/images/'
+
+data_folder = '.data/widerface/WIDER_val/images/'
+
 
 def get_folder_name(pic):
     """
@@ -11,14 +13,20 @@ def get_folder_name(pic):
     :return: folder name
     """
     x = pic.split('_')[1:3]
-    s = pic.split('_')[0]+ '--'+ '_'.join(sorted(set(x), key=x.index)) + '/'
+    s = pic.split('_')[0] + '--' + '_'.join(sorted(set(x), key=x.index)) + '/'
 
     if 'Demonstration' in s:
-      try:
-        s = s[:s.index('_')] + '/'
-      except ValueError:
-       pass
+        try:
+            s = s[:s.index('_')] + '/'
+        except ValueError:
+            pass
     return s
+
+
+def get_pic_name(pic):
+    s = pic.split('/')[-1]
+    return s.replace('\\', '/')
+
 
 def jaccard_distance(boxA, boxB):
     """
@@ -53,6 +61,7 @@ def jaccard_distance(boxA, boxB):
     # return the intersection over union value
     return iou * (iou > 0.5)
 
+
 def find_best_bbox(box, predicted_boxes):
     """
     Find the corresponding predicted bounding box 
@@ -62,17 +71,18 @@ def find_best_bbox(box, predicted_boxes):
     :return: index of the corresponding bbox, jaccard distance
     """
     if type(box) == list:
-        box = ' '.join(map(str,box))
-    (x1, y1, w, h) = map(int,box.split()[:4])
-    boxA = [x1, y1, x1+w, y1+h]
+        box = ' '.join(map(str, box))
+    (x1, y1, w, h) = map(int, box.split()[:4])
+    boxA = [x1, y1, x1 + w, y1 + h]
     l = []
     # boxB : [x1, x2, y1, y2] (top-left and bottom-right)
     for boxB in predicted_boxes:
         l.append(jaccard_distance(boxA, boxB))
     if len(l) > 0:
-      return np.argmax(l), np.max(l)
+        return np.argmax(l), np.max(l)
     else:
-      return -1, 0
+        return -1, 0
+
 
 def mean_jaccard(truth_boxes, predicted_boxes, only_tp=True, blurred=0):
     """
@@ -85,13 +95,14 @@ def mean_jaccard(truth_boxes, predicted_boxes, only_tp=True, blurred=0):
     """
     l = []
     for truth_box in truth_boxes:
-        if int(truth_box.split()[4]) >= blurred:
-            _, jd = find_best_bbox(truth_box, predicted_boxes)
-            l.append(jd)
+        # if int(truth_box.split()[4]) >= blurred:
+        _, jd = find_best_bbox(truth_box, predicted_boxes)
+        l.append(jd)
     if only_tp:
         l = [k for k in l if k > 0]
     if len(l) > 0:
         return np.mean(l), len(l)
+
 
 def compute_stats(data_dir, truth, predictions, blurred=0):
     """
@@ -109,23 +120,24 @@ def compute_stats(data_dir, truth, predictions, blurred=0):
     pictures = glob.glob(data_dir + '*')
     n_pictures = len(pictures)
     jaccard, n_truth_boxes, n_pred_boxes = [], [], []
-    a = np.zeros((n_pictures,4))
-    
+    a = np.zeros((n_pictures, 4))
+
     for idx in range(n_pictures):
-        truth_boxes = truth[pictures[idx].replace(data_folder, '')]
+        truth_boxes = truth[get_pic_name(pictures[idx])]
         temp = mean_jaccard(truth_boxes, predictions[idx], blurred=blurred)
         if temp:
             mean_jac, nb_pred = temp
         else:
             mean_jac, nb_pred = None, 0
         jaccard.append(mean_jac)
-        n_truth_boxes.append(len([k for k in truth_boxes if int(k.split()[4]) >= blurred]))
-        n_pred_boxes.append(nb_pred)  
-    
-    a[:,0] = jaccard
-    a[:,1] = n_truth_boxes
-    a[:,2] = n_pred_boxes
-    a[:,3] = a[:,2]/a[:,1]
+        # if int(k.split()[4]) >= blurred
+        n_truth_boxes.append(len([k for k in truth_boxes ]))
+        n_pred_boxes.append(nb_pred)
+
+    a[:, 0] = jaccard
+    a[:, 1] = n_truth_boxes
+    a[:, 2] = n_pred_boxes
+    a[:, 3] = a[:, 2] / a[:, 1]
     df = pd.DataFrame(a, columns=['mJaccard', 'Nb_Truth_Bboxes', 'Nb_Pred_Bboxes', 'Ratio_Bboxes'])
     df['Folder'] = data_dir.replace(data_folder, '')
     return a, df

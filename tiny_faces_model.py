@@ -41,10 +41,10 @@ class Model():
 
       weights = self.get_data_by_key(name + "_filter")  # (h, w, channel, filter)
       assert list(weights.shape) == shape
-      initializer = tf.constant_initializer(weights, dtype=self.dtype)
+      initializer = tf.compat.v1.constant_initializer(weights, dtype=self.dtype)
 
       with tf.device('/cpu:0'):
-        var = tf.get_variable(name + "_w", shape, initializer=initializer, dtype=self.dtype)
+        var = tf.compat.v1.get_variable(name + "_w", shape, initializer=initializer, dtype=self.dtype)
       return var
 
     def _bias_variable_on_cpu(self, name, shape):
@@ -60,10 +60,10 @@ class Model():
       assert isinstance(shape, int)
       bias = self.get_data_by_key(name + "_bias")
       assert len(bias) == shape
-      initializer = tf.constant_initializer(bias, dtype=self.dtype)
+      initializer = tf.compat.v1.constant_initializer(bias, dtype=self.dtype)
 
       with tf.device('/cpu:0'):
-        var = tf.get_variable(name + "_b", shape, initializer=initializer, dtype=self.dtype)
+        var = tf.compat.v1.get_variable(name + "_b", shape, initializer=initializer, dtype=self.dtype)
       return var
 
 
@@ -89,14 +89,14 @@ class Model():
       variance = self.get_data_by_key(name2 + '_variance')
 
       with tf.device('/cpu:0'):
-        initializer = tf.constant_initializer(scale, dtype=self.dtype)
-        scale = tf.get_variable(name2 + "_scale", shape, initializer=initializer, dtype=self.dtype)
-        initializer = tf.constant_initializer(offset, dtype=self.dtype)
-        offset = tf.get_variable(name2 + "_offset", shape, initializer=initializer, dtype=self.dtype)
-        initializer = tf.constant_initializer(mean, dtype=self.dtype)
-        mean = tf.get_variable(name2 + "_mean", shape, initializer=initializer, dtype=self.dtype)
-        initializer = tf.constant_initializer(variance, dtype=self.dtype)
-        variance = tf.get_variable(name2 + "_variance", shape, initializer=initializer, dtype=self.dtype)
+        initializer = tf.compat.v1.constant_initializer(scale, dtype=self.dtype)
+        scale = tf.compat.v1.get_variable(name2 + "_scale", shape, initializer=initializer, dtype=self.dtype)
+        initializer = tf.compat.v1.constant_initializer(offset, dtype=self.dtype)
+        offset = tf.compat.v1.get_variable(name2 + "_offset", shape, initializer=initializer, dtype=self.dtype)
+        initializer = tf.compat.v1.constant_initializer(mean, dtype=self.dtype)
+        mean = tf.compat.v1.get_variable(name2 + "_mean", shape, initializer=initializer, dtype=self.dtype)
+        initializer = tf.compat.v1.constant_initializer(variance, dtype=self.dtype)
+        variance = tf.compat.v1.get_variable(name2 + "_variance", shape, initializer=initializer, dtype=self.dtype)
 
       return scale, offset, mean, variance
 
