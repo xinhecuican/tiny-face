@@ -122,13 +122,15 @@ class Model():
         a block of layers
       """
       assert len(shape) == 4
-
-      weight = self._weight_variable_on_cpu(name, shape)
-      conv = tf.nn.conv2d(bottom, weight, strides, padding=padding)
+      # weight的前两维是卷积核大小，第三维是输入层的通道数，第四维是输出层的通道数
+      weight = self._weight_variable_on_cpu(name, shape) #获得卷积核的tensorflow变量类型
+      # strides中间两维是步长，第一维和最后一维3固定是1
+      # 第一个变量是要卷积的图片(输入)，第二个变量是卷积核，第三个是步长，第四个是填充
+      conv = tf.nn.conv2d(bottom, weight, strides, padding=padding) # 生成一个卷积层
       if has_bias:
         bias = self._bias_variable_on_cpu(name, shape[3])
 
-      pre_activation = tf.nn.bias_add(conv, bias) if has_bias else conv
+      pre_activation = tf.nn.bias_add(conv, bias) if has_bias else conv # 添加偏置
 
       if add_bn:
         # scale, offset, mean, variance = self._bn_variable_on_cpu("bn_" + name, shape[-1])
@@ -204,11 +206,12 @@ class Model():
           a score tensor
         """
         img = tf.pad(image, [[0, 0], [3, 3], [3, 3], [0, 0]], "CONSTANT")
+        # conv_block中有注释，通过预训练数据生成了resNet的一个卷积层
         conv = self.conv_block(img, 'conv1', shape=[7, 7, 3, 64], strides=[1, 2, 2, 1], padding="VALID", add_relu=True)
         pool1 = tf.nn.max_pool(conv, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='SAME')
 
         res2a_branch1 = self.conv_block(pool1, 'res2a_branch1', shape=[1, 1, 64, 256], padding="VALID", add_relu=False)
-        res2a = self.residual_block(pool1, 'res2a', 64, 64, 256, res2a_branch1)
+        res2a = self.residual_block(pool1, 'res2a', 64, 64, 256, res2a_branch1) # 残差链接
         res2b = self.residual_block(res2a, 'res2b', 256, 64, 256, res2a)
         res2c = self.residual_block(res2b, 'res2c', 256, 64, 256, res2b)
 

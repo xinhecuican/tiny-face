@@ -68,7 +68,7 @@ def evaluate(weight_file_path, output_dir=None, data_dir=None, img=None, list_im
     average_image = model.get_data_by_key("average_image")
 
     # Reference boxes of template for 05x, 1x, and 2x scale
-    clusters = model.get_data_by_key("clusters")
+    clusters = model.get_data_by_key("clusters") # 一些参考的包围盒，shape为[25, 5]。共有25组，每组最后一个是scale，前面四个是x, y, w+x, h+x
     clusters_h = clusters[:, 3] - clusters[:, 1] + 1
     clusters_w = clusters[:, 2] - clusters[:, 0] + 1
     normal_idx = np.where(clusters[:, 4] == 1)
@@ -86,7 +86,7 @@ def evaluate(weight_file_path, output_dir=None, data_dir=None, img=None, list_im
 
     # main
     with tf.compat.v1.Session() as sess:
-        sess.run(tf.compat.v1.global_variables_initializer())
+        sess.run(tf.compat.v1.global_variables_initializer()) # 初始化所有变量
         for filename in filenames:
             # if we provide only one picture, no need to list files in dir
             if not one_pic and type(list_imgs) != list:
@@ -138,7 +138,7 @@ def evaluate(weight_file_path, output_dir=None, data_dir=None, img=None, list_im
 
                 # collect scores
                 score_cls_tf, score_reg_tf = score_final_tf[:, :, :, :25], score_final_tf[:, :, :, 25:125]
-                prob_cls_tf = expit(score_cls_tf)
+                prob_cls_tf = expit(score_cls_tf) #sigmoid
                 prob_cls_tf[0, :, :, ignoredTids] = 0.0
 
                 def _calc_bounding_boxes():
